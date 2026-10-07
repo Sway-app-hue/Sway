@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<title>SWAY</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;background:#fff;color:#111;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+button,input,textarea{font:inherit}button{border:0;background:none;cursor:pointer}
+.app{min-height:100vh}.top{height:60px;border-bottom:1px solid #ddd;display:flex;align-items:center;justify-content:space-between;padding:0 max(16px,calc((100vw - 980px)/2));position:sticky;top:0;background:#fff;z-index:20}
+.logo{font-size:27px;font-weight:800;letter-spacing:-1.5px}.top-actions{display:flex;gap:20px;align-items:center}.icon{font-size:25px;line-height:1}
+.search{width:245px;background:#f1f1f1;border-radius:9px;padding:9px 14px;border:0;outline:0}
+.layout{max-width:980px;margin:auto;display:grid;grid-template-columns:minmax(0,630px) 300px;gap:40px;padding:22px 12px 80px}
+.stories{display:flex;gap:16px;overflow:auto;padding:2px 4px 18px;border-bottom:1px solid #eee;margin-bottom:24px}.stories::-webkit-scrollbar{display:none}
+.story{min-width:68px;text-align:center;font-size:12px}.story-ring{width:64px;height:64px;border-radius:50%;padding:3px;background:linear-gradient(45deg,#f9ce34,#ee2a7b,#6228d7);margin:auto}.story-ring img{width:100%;height:100%;border-radius:50%;object-fit:cover;border:3px solid white}.story span{display:block;margin-top:5px;overflow:hidden;text-overflow:ellipsis}
+.post{border-bottom:1px solid #ddd;margin-bottom:24px;padding-bottom:18px}.post-head{display:flex;align-items:center;gap:10px;padding:0 3px 10px}.avatar{width:34px;height:34px;border-radius:50%;object-fit:cover}.user{font-size:14px;font-weight:700}.time{font-size:12px;color:#777}.dots{margin-left:auto;font-size:20px}.photo{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:3px;background:#eee;display:block}
+.actions{display:flex;align-items:center;padding:10px 2px 5px;gap:16px}.actions .right{margin-left:auto}.act{font-size:25px}.liked{color:#ed4956}.count{font-weight:700;font-size:14px;margin:0 0 6px}.caption{font-size:14px;line-height:1.4}.caption b{margin-right:5px}.comments{color:#777;font-size:14px;margin-top:6px}.add-comment{display:flex;gap:8px;margin-top:9px}.add-comment input{flex:1;border:0;outline:0;padding:5px 0}.post-btn{color:#0095f6;font-weight:700}
+.sidebar{position:sticky;top:82px;height:max-content}.me{display:flex;align-items:center;gap:12px;margin:8px 0 20px}.me img{width:48px;height:48px;border-radius:50%}.switch{margin-left:auto;color:#0095f6;font-size:12px;font-weight:700}.suggest-head{display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:#777;margin-bottom:12px}.suggest{display:flex;align-items:center;margin:13px 0}.suggest img{width:36px;height:36px;border-radius:50%;margin-right:10px}.suggest small{display:block;color:#777}.follow{margin-left:auto;color:#0095f6;font-size:12px;font-weight:700}
+.bottom{display:none}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}.modal.show{display:flex}.box{background:#fff;border-radius:14px;width:min(430px,100%);overflow:hidden}.box h2{text-align:center;font-size:16px;padding:14px;margin:0;border-bottom:1px solid #ddd}.box textarea{width:100%;height:130px;border:0;outline:0;padding:16px;resize:none}.box input{width:calc(100% - 32px);margin:0 16px 14px;padding:11px;border:1px solid #ddd;border-radius:8px}.modal-actions{display:flex;border-top:1px solid #ddd}.modal-actions button{width:50%;padding:13px}.primary{color:#0095f6;font-weight:700;border-left:1px solid #ddd}
+.empty{text-align:center;padding:70px 20px;color:#777}
+@media(max-width:800px){.layout{display:block;max-width:650px}.sidebar{display:none}.search{display:none}.top{padding:0 16px}.bottom{display:flex;position:fixed;bottom:0;left:0;right:0;height:58px;background:#fff;border-top:1px solid #ddd;z-index:30;align-items:center;justify-content:space-around}.bottom button{font-size:25px}.layout{padding:15px 0 70px}.stories{padding-left:12px;padding-right:12px}.post{border-bottom:1px solid #ddd}.photo{border-radius:0}.post-head,.actions,.count,.caption,.comments,.add-comment{margin-left:12px;margin-right:12px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="top">
+  <div class="logo">SWAY</div>
+  <input id="search" class="search" placeholder="Suchen" oninput="searchPosts()">
+  <div class="top-actions">
+    <button class="icon" onclick="openCreate()" aria-label="Erstellen">＋</button>
+    <button class="icon" onclick="scrollToFeed()" aria-label="Gefällt mir">♡</button>
+    <button class="icon" onclick="openSettings()" aria-label="Einstellungen">☰</button>
+  </div>
+</header>
+
+<main class="layout">
+<section>
+  <div class="stories" id="stories"></div>
+  <div id="feed"></div>
+</section>
+<aside class="sidebar">
+  <div class="me">
+    <img src="https://i.pravatar.cc/100?img=12"><div><b>dein_sway</b><small style="display:block;color:#777">Dein Profil</small></div><button class="switch">Wechseln</button>
+  </div>
+  <div class="suggest-head"><span>Vorschläge für dich</span><span>Alle ansehen</span></div>
+  <div id="suggestions"></div>
+  <p style="color:#aaa;font-size:11px;line-height:1.5">Über · Hilfe · Datenschutz · Bedingungen<br>© 2026 SWAY</p>
+</aside>
+</main>
+
+<nav class="bottom">
+<button onclick="scrollToFeed()">⌂</button><button onclick="focusSearch()">⌕</button><button onclick="openCreate()">＋</button><button onclick="showNotice('Aktivitäten')">♡</button><button onclick="showNotice('Profil')">◉</button>
+</nav>
+
+<div class="modal" id="createModal">
+<div class="box">
+<h2>Neuer Beitrag <button style="float:right" onclick="closeCreate()">✕</button></h2>
+<textarea id="caption" placeholder="Schreibe eine Bildunterschrift …"></textarea>
+<input id="imageUrl" placeholder="Bild-URL (optional)">
+<div class="modal-actions"><button onclick="closeCreate()">Abbrechen</button><button class="primary" onclick="createPost()">Teilen</button></div>
+</div></div>
+
+<div class="modal" id="settingsModal">
+<div class="box">
+<h2>SWAY <button style="float:right" onclick="closeSettings()">✕</button></h2>
+<div style="padding:18px">
+<p><b>Supabase verbinden</b></p>
+<input id="sbUrl" placeholder="Supabase Project URL" style="width:100%;margin:8px 0">
+<input id="sbKey" placeholder="Anon / Publishable Key" style="width:100%;margin:8px 0">
+<button class="primary" style="width:100%;padding:12px" onclick="saveSettings()">Speichern</button>
+<p style="font-size:12px;color:#777">Nutze nur den öffentlichen Anon/Publishable Key, niemals einen service_role Key.</p>
+</div>
+</div></div>
+
+<script>
+const demoUsers=[
+ {username:"alex",name:"Alex",img:"https://i.pravatar.cc/150?img=12"},
+ {username:"mila",name:"Mila",img:"https://i.pravatar.cc/150?img=47"},
+ {username:"leo",name:"Leo",img:"https://i.pravatar.cc/150?img=33"},
+ {username:"sara",name:"Sara",img:"https://i.pravatar.cc/150?img=44"},
+ {username:"noah",name:"Noah",img:"https://i.pravatar.cc/150?img=13"},
+ {username:"lina",name:"Lina",img:"https://i.pravatar.cc/150?img=32"}
+];
+let posts=[
+ {id:1,user:demoUsers[0],img:"https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1000&q=85",text:"Willkommen bei SWAY ✨",likes:128,comments:14,liked:false},
+ {id:2,user:demoUsers[1],img:"https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=1000&q=85",text:"Neue Ideen. Neue Leute. Dein SWAY.",likes:76,comments:8,liked:false}
+];
+function renderStories(){
+ const s=document.getElementById("stories"); s.innerHTML=demoUsers.map(u=>`<div class="story"><div class="story-ring"><img src="${u.img}"></div><span>${u.username}</span></div>`).join("");
+}
+function renderSuggestions(){
+ document.getElementById("suggestions").innerHTML=demoUsers.slice(2).map(u=>`<div class="suggest"><img src="${u.img}"><div><b>${u.username}</b><small>Neu bei SWAY</small></div><button class="follow">Folgen</button></div>`).join("");
+}
+function renderFeed(list=posts){
+ const f=document.getElementById("feed");
+ if(!list.length){f.innerHTML='<div class="empty">Keine Beiträge gefunden.</div>';return}
+ f.innerHTML=list.map(p=>`
+ <article class="post">
+  <div class="post-head"><img class="avatar" src="${p.user.img}"><div><div class="user">${p.user.username}</div><div class="time">vor kurzem</div></div><button class="dots" onclick="showNotice('Beitrag-Menü')">•••</button></div>
+  <img class="photo" src="${p.img}" onerror="this.style.display='none'">
+  <div class="actions">
+   <button class="act ${p.liked?'liked':''}" onclick="toggleLike(${p.id})">${p.liked?'♥':'♡'}</button>
+   <button class="act" onclick="focusComment(${p.id})">♧</button>
+   <button class="act" onclick="showNotice('Teilen')">➤</button>
+   <button class="act right" onclick="showNotice('Gespeichert')">♧</button>
+  </div>
+  <div class="count">${p.likes} Gefällt mir</div>
+  <div class="caption"><b>${p.user.username}</b>${escapeHtml(p.text)}</div>
+  <div class="comments" onclick="focusComment(${p.id})">${p.comments>0?'Alle '+p.comments+' Kommentare ansehen':''}</div>
+  <div class="add-comment"><input id="comment-${p.id}" placeholder="Kommentar hinzufügen …"><button class="post-btn" onclick="addComment(${p.id})">Posten</button></div>
+ </article>`).join("");
+}
+function escapeHtml(s){return s.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));}
+function toggleLike(id){let p=posts.find(x=>x.id===id);p.liked=!p.liked;p.likes+=p.liked?1:-1;renderFeed(posts);}
+function addComment(id){const i=document.getElementById("comment-"+id);if(i.value.trim()){posts.find(x=>x.id===id).comments++;i.value="";renderFeed(posts);}}
+function focusComment(id){setTimeout(()=>document.getElementById("comment-"+id)?.focus(),50)}
+function searchPosts(){const q=document.getElementById("search").value.toLowerCase();renderFeed(posts.filter(p=>(p.text+" "+p.user.username).toLowerCase().includes(q)));}
+function focusSearch(){document.getElementById("search").focus();window.scrollTo({top:0,behavior:"smooth"});}
+function scrollToFeed(){window.scrollTo({top:0,behavior:"smooth"});}
+function openCreate(){document.getElementById("createModal").classList.add("show")}
+function closeCreate(){document.getElementById("createModal").classList.remove("show")}
+function createPost(){const text=document.getElementById("caption").value.trim()||"Mein neuer SWAY-Beitrag ✨";const img=document.getElementById("imageUrl").value.trim()||"https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1000&q=85";posts.unshift({id:Date.now(),user:{username:"dein_sway",name:"Dein Profil",img:"https://i.pravatar.cc/150?img=12"},img,text,likes:0,comments:0,liked:false});document.getElementById("caption").value="";document.getElementById("imageUrl").value="";closeCreate();renderFeed(posts)}
+function openSettings(){document.getElementById("settingsModal").classList.add("show");document.getElementById("sbUrl").value=localStorage.getItem("sway_sb_url")||"";document.getElementById("sbKey").value=localStorage.getItem("sway_sb_key")||""}
+function closeSettings(){document.getElementById("settingsModal").classList.remove("show")}
+function saveSettings(){localStorage.setItem("sway_sb_url",document.getElementById("sbUrl").value.trim());localStorage.setItem("sway_sb_key",document.getElementById("sbKey").value.trim());closeSettings();showNotice("Supabase gespeichert")}
+function showNotice(t){alert(t+" – kommt als nächstes in die echte Funktion.")}
+renderStories();renderSuggestions();renderFeed();
+</script>
+</body>
+</html>
